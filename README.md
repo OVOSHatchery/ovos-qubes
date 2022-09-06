@@ -1,5 +1,5 @@
 # ovos-qubes
-setting up a hardened ovos-core under QubesOS
+setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 * [Architecture](#architecture)
 * [Creating OVOS Qubes](#creating-ovos-qubes)
@@ -18,8 +18,8 @@ setting up a hardened ovos-core under QubesOS
 - sys-ovos-firewall 
   - DispVM
   - set firewall rules
-  - can be connected to a VPN
-  - can use mirage firewall unikernel
+  - can be connected [sys-vpn](https://github.com/Qubes-Community/Contents/blob/master/docs/configuration/vpn.md)
+  - can use [mirage firewall unikernel](https://github.com/mirage/qubes-mirage-firewall)
   - all networked ovos qubes connect here
 - template-ovos-base
   - templateVM
