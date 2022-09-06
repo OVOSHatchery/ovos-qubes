@@ -10,7 +10,7 @@ setting up a hardened ovos-core under QubesOS
   - can be connected to a VPN
   - can use mirage firewall unikernel
   - all networked ovos qubes connect here
-- ovos-base-template
+- template-ovos-base
   - templateVM
   - /etc/mycroft/mycroft.conf lives here
   - system packages installed/updated here
@@ -44,9 +44,40 @@ setting up a hardened ovos-core under QubesOS
   - sys-ovos-firewall needed for stream playback / web browsing / remote pictures
 
   
-## ovos-base-template
+## template-ovos-base
 
 - clone a debian template VM as `template-ovos-base`
 - debloat the image
-
-- install packages shared across all VMs
+```bash
+sudo apt purge firefox-esr thunderbird keepassxc nautilus
+sudo apt purge emacs*
+sudo apt purge vim*
+sudo apt autoremove
+```
+- install system packages
+```bash
+sudo apt-get install python3-pip swig libfann-dev portaudio19-dev libpulse-dev libespeak-ng1
+sudo apt-get install qubes-core-agent-dom0-updates qubes-core-agent-passwordless-root
+```
+- create mycroft.conf
+```bash
+sudo mkdir /etc/mycroft
+sudo nano /etc/mycroft/mycroft.conf
+```
+- configure to your liking
+```json
+{
+  "lang": "en-us",
+  "time_format": "full",
+  "date_format": "DMY",
+  "gui": {
+    "extension": "smartspeaker",
+    "idle_display_skill": "skill-ovos-homescreen.openvoiceos"
+  },
+  "stt": {"module": "ovos-stt-plugin-server"},
+  "tts": {"module": "ovos-tts-plugin-mimic3"},
+  "padatious": {"regex_only": true},
+  "debug": true,
+  "log_level": "DEBUG"
+}
+```
