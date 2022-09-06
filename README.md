@@ -1,8 +1,19 @@
 # ovos-qubes
 setting up a hardened ovos-core under QubesOS
 
+* [Architecture](#architecture)
+* [Creating OVOS Qubes](#creating-ovos-qubes)
+  + [template-ovos-base](#template-ovos-base)
+  + [ovos-bus](#ovos-bus)
+  + [ovos-gui](#ovos-gui)
+  + [ovos-audio](#ovos-audio)
+  + [ovos-skills](#ovos-skills)
+  + [ovos-speech](#ovos-speech)
+* [Connecting the Qubes](#connecting-the-qubes)
+  + [Exposing port 8181 from ovos-bus](#exposing-port-8181-from-ovos-bus)
+  + [Create ovos-bus system services](#create-ovos-bus-system-services)
 
-## architecture
+## Architecture
 
 - sys-ovos-firewall 
   - DispVM
@@ -43,41 +54,217 @@ setting up a hardened ovos-core under QubesOS
   - mycroft-gui installed as user from source
   - sys-ovos-firewall needed for stream playback / web browsing / remote pictures
 
+## Creating OVOS Qubes
   
-## template-ovos-base
+### template-ovos-base
 
 - clone a debian template VM as `template-ovos-base`
 - debloat the image
-```bash
-sudo apt purge firefox-esr thunderbird keepassxc nautilus
-sudo apt purge emacs*
-sudo apt purge vim*
-sudo apt autoremove
-```
+  ```bash
+  sudo apt purge firefox-esr thunderbird keepassxc nautilus
+  sudo apt purge emacs*
+  sudo apt purge vim*
+  sudo apt autoremove
+  ```
 - install system packages
-```bash
-sudo apt-get install python3-pip swig libfann-dev portaudio19-dev libpulse-dev libespeak-ng1
-sudo apt-get install qubes-core-agent-dom0-updates qubes-core-agent-passwordless-root
-```
+  ```bash
+  sudo apt-get install python3-pip swig libfann-dev portaudio19-dev libpulse-dev libespeak-ng1
+  sudo apt-get install qubes-core-agent-dom0-updates qubes-core-agent-passwordless-root
+  ```
 - create mycroft.conf
-```bash
-sudo mkdir /etc/mycroft
-sudo nano /etc/mycroft/mycroft.conf
-```
+  ```bash
+  sudo mkdir /etc/mycroft
+  sudo nano /etc/mycroft/mycroft.conf
+  ```
 - configure to your liking
-```json
-{
-  "lang": "en-us",
-  "time_format": "full",
-  "date_format": "DMY",
-  "gui": {
-    "extension": "smartspeaker",
-    "idle_display_skill": "skill-ovos-homescreen.openvoiceos"
-  },
-  "stt": {"module": "ovos-stt-plugin-server"},
-  "tts": {"module": "ovos-tts-plugin-mimic3"},
-  "padatious": {"regex_only": true},
-  "debug": true,
-  "log_level": "DEBUG"
-}
+  ```json
+  {
+    "lang": "en-us",
+    "time_format": "full",
+    "date_format": "DMY",
+    "gui": {
+      "extension": "smartspeaker",
+      "idle_display_skill": "skill-ovos-homescreen.openvoiceos"
+    },
+    "stt": {"module": "ovos-stt-plugin-server"},
+    "tts": {"module": "ovos-tts-plugin-mimic3"},
+    "padatious": {"regex_only": true},
+    "debug": true,
+    "log_level": "DEBUG"
+  }
+  ```
+- shutdown the qube
+
+### ovos-bus
+
+- create `ovos-bus` qubes from `template-ovos-base`
+- (optional) make this qube launch on boot
+- install ovos-bus (no sudo!)
+  ```bash
+  pip install ovos-core[bus]
+  ```
+- create auto_start.sh `nano auto-start.sh`
+  ```bash
+  /home/user/.local/bin/mycroft-messagebus >> /home/user/bus.log 2>&1 &
+  ```
+- create .desktop file to autostart ovos-bus when the VM boots `nano /home/user/.config/autostart/mycroft-messagebus.desktop`
+  ```
+  [Desktop Entry]
+  Name=OVOS Messagebus
+  Exec=bash /home/user/auto-start.sh
+  Type=Application
+  StartupNotify=true
+  NoDisplay=true
+  ```
+- shutdown the qube
+
+### ovos-gui
+- create `ovos-gui` qubes from `template-ovos-base`
+- (optional) make this qube launch on boot
+- install ovos-gui (no sudo!)
+  ```bash
+  pip install ovos-core[gui]
+  ```
+- create auto_start.sh `nano auto-start.sh`
+  ```bash
+  /home/user/.local/bin/mycroft-gui-service >> /home/user/gui.log 2>&1 &
+  ```
+- create .desktop file to autostart ovos-gui when the VM boots `nano /home/user/.config/autostart/mycroft-gui-messagebus.desktop`
+  ```
+  [Desktop Entry]
+  Name=OVOS GUI Messagebus
+  Exec=bash /home/user/auto-start.sh
+  Type=Application
+  StartupNotify=true
+  NoDisplay=true
+  ```
+- expose ovos-bus to ovos-gui (see below)
+- shutdown the qube
+
+### ovos-audio
+- create `ovos-audio` qubes from `template-ovos-base`
+- (optional) make this qube launch on boot
+- install ovos-audio (no sudo!)
+  ```bash
+  pip install ovos-core[audio,tts,audio_backend]
+  ```
+- install extra TTS plugins
+  - system dependencies need to be installed in `template-ovos-base`
+- create auto_start.sh `nano auto-start.sh`
+  ```bash
+  /home/user/.local/bin/mycroft-audio >> /home/user/audio.log 2>&1 &
+  ```
+- create .desktop file to autostart ovos-audio when the VM boots `nano /home/user/.config/autostart/mycroft-audio.desktop`
+  ```
+  [Desktop Entry]
+  Name=OVOS Audio Service
+  Exec=bash /home/user/auto-start.sh
+  Type=Application
+  StartupNotify=true
+  NoDisplay=true
+  ```
+- expose ovos-bus to ovos-audio (see below)
+- shutdown the qube
+
+### ovos-skills
+- create `ovos-skills` qubes from `template-ovos-base`
+- (optional) make this qube launch on boot
+- install ovos-skills (no sudo!)
+  ```bash
+  pip install ovos-core[skills]
+  ```
+- install skills
+  - system dependencies need to be installed in `template-ovos-base`
+- create auto_start.sh `nano auto-start.sh`
+  ```bash
+  /home/user/.local/bin/mycroft-skills >> /home/user/skills.log 2>&1 &
+  ```
+- create .desktop file to autostart ovos-skills when the VM boots `nano /home/user/.config/autostart/mycroft-skills.desktop`
+  ```
+  [Desktop Entry]
+  Name=OVOS Skills Service
+  Exec=bash /home/user/auto-start.sh
+  Type=Application
+  StartupNotify=true
+  NoDisplay=true
+  ```
+- expose ovos-bus to ovos-skills (see below)
+- shutdown the qube
+
+
+### ovos-speech
+- create `ovos-speech` qubes from `template-ovos-base`
+- (optional) make this qube launch on boot
+- install ovos-speech (no sudo!)
+  ```bash
+  pip install ovos-core[stt]
+  ```
+- create auto_start.sh `nano auto-start.sh`
+  ```bash
+  /home/user/.local/bin/mycroft-speech-client >> /home/user/stt.log 2>&1 &
+  ```
+- create .desktop file to autostart ovos-speech when the VM boots `nano /home/user/.config/autostart/mycroft-stt.desktop`
+  ```
+  [Desktop Entry]
+  Name=OVOS Speech Client
+  Exec=bash /home/user/auto-start.sh
+  Type=Application
+  StartupNotify=true
+  NoDisplay=true
+  ```
+- expose ovos-bus to ovos-speech (see below)
+- shutdown the qube
+- attach microphone
+  - manually after qube starts
+  - permanently 
+
+## Connecting the Qubes
+
+
+### Exposing port 8181 from ovos-bus
+
+expose port 8181 from ovos-bus to all `ovos-XXX` qubes
+
+- open a terminal in `dom0`
+- `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
+- add a new line with `ovos-XXX @default allow, target=ovos-bus` for every ovos qube
+- a reboot will needed for change to take effect
+
+
+### Create ovos-bus system services
+
+open a terminal in `ovos-XXX` and create the system services to connect to ovos-bus on launch
+
+- create bus.socket `sudo nano /rw/config/bus.socket`
+```
+[Unit]
+Description=ovos-bus-service
+
+[Socket]
+ListenStream=127.0.0.1:8181
+Accept=true
+
+[Install]
+WantedBy=sockets.target
+```
+- create bus@.service `sudo nano bus@.service`
+```
+[Unit]
+Description=ovos-bus
+
+[Service]
+ExecStart=qrexec-client-vm '' qubes.ConnectTCP+8181
+StandardInput=socket
+StandardOutput=inherit
+```
+- edit rc.local to launch the service on qube launch `sudo /rw/config/rc.local `
+```
+#!/bin/sh
+
+# This script will be executed at every VM startup, you can place your own
+# custom commands here. This includes overriding some configuration in /etc,
+# starting services etc.
+cp -r /rw/config/bus.socket /rw/config/bus@.service /lib/systemd/system/
+systemctl daemon-reload
+systemctl start bus.socket 
 ```
