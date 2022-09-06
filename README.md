@@ -6,6 +6,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 * [Architecture](#architecture)
 * [Creating OVOS Qubes](#creating-ovos-qubes)
   + [template-ovos-base](#template-ovos-base)
+  + [ovos-backend](#ovos-backend)
   + [ovos-bus](#ovos-bus)
   + [ovos-audio](#ovos-audio)
   + [ovos-skills](#ovos-skills)
@@ -14,8 +15,10 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   + [ovos-gui-client](#ovos-gui-client)
 * [Connecting the Qubes](#connecting-the-qubes)
   + [Exposing port 8181 from ovos-bus](#exposing-port-8181-from-ovos-bus)
+  + [Exposing port 6712 from ovos-backend](#exposing-port-6712-from-ovos-backend)
   + [Exposing port 18181 from ovos-gui](#exposing-port-18181-from-ovos-gui)
   + [Create ovos-bus system services](#create-ovos-bus-system-services)
+  + [Create ovos-backend system services](#create-ovos-backend-system-services)
   + [Create ovos-gui system service](#create-ovos-gui-system-service)
 
 ## Architecture
@@ -30,6 +33,11 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   - templateVM
   - /etc/mycroft/mycroft.conf lives here
   - system packages installed/updated here
+- ovos-backend
+  - AppVM
+  - ovos-local-backend installed as user
+  - sys-ovos-firewall needed for API services / remote STT
+  - 6712 port exposed to other ovos qubes
 - ovos-bus
   - AppVM
   - ovos-bus installed as user
@@ -98,7 +106,73 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
     "log_level": "DEBUG"
   }
   ```
+  
+### ovos-backend
 
+- create `ovos-backend` qubes from `template-ovos-base`
+- select `sys-ovos-firewall` as NetVM
+- (optional) make this qube launch on boot
+- install ovos-local-backend (no sudo!)
+  ```bash
+  pip install git+https://github.com/OpenVoiceOS/OVOS-local-backend
+  ```
+- configure backend `nano ~/.config/json_database/ovos_backend.json`
+  ```
+  {
+    "stt": {
+      "module": "ovos-stt-plugin-server",
+      "ovos-stt-plugin-server": {"url": "https://stt.openvoiceos.com/stt"}
+    },
+    "backend_port": 6712,
+    "geolocate": true,
+    "override_location": false,
+    "api_version": "v1",
+    "data_path": "~",
+    "record_utterances": false,
+    "record_wakewords": false,
+    "wolfram_key": "$KEY",
+    "owm_key": "$KEY",
+    "lang": "en-us",
+    "date_format": "DMY",
+    "system_unit": "metric",
+    "time_format": "full",
+    "default_location": {
+      "city": {"...": "..."},
+      "coordinate": {"...": "..."},
+      "timezone": {"...": "..."}
+    }
+  }  
+  ```
+- create auto_start.sh `nano auto-start.sh`
+  ```bash
+  /home/user/.local/bin/ovos-local-backend >> /home/user/backend.log 2>&1 &
+  ```
+- create .desktop file to autostart ovos-backend when the VM boots `nano /home/user/.config/autostart/ovos-backend.desktop`
+  ```
+  [Desktop Entry]
+  Name=OVOS Local Backend
+  Exec=bash /home/user/auto-start.sh
+  Type=Application
+  StartupNotify=true
+  NoDisplay=true
+  ```
+- configure mycroft.conf in `template-ovos-base` or in every independent `ovos-XXX` qube
+  ```
+  {
+    "server": {
+      "url": "http://0.0.0.0:6712",
+      "version": "v1",
+      "update": true,
+      "metrics": true
+    },
+    "listener": {
+      "wake_word_upload": {
+        "url": "http://0.0.0.0:6712/precise/upload"
+      }
+    }
+  }
+  ```
+  
 ### ovos-bus
 
 - create `ovos-bus` qubes from `template-ovos-base`
@@ -121,6 +195,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   StartupNotify=true
   NoDisplay=true
   ```
+- (optional) expose ovos-backend to ovos-bus (see below)
 
 ### ovos-audio
 - create `ovos-audio` qubes from `template-ovos-base`
@@ -151,7 +226,10 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   NoDisplay=true
   ```
 - expose ovos-bus to ovos-audio (see below)
-
+- (optional) expose ovos-backend to ovos-audio (see below)
+  - needs to be set in mycroft.conf
+  - needed for metrics (opt in)
+  
 ### ovos-skills
 - create `ovos-skills` qubes from `template-ovos-base`
 - select `sys-ovos-firewall` as NetVM
@@ -177,7 +255,12 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   NoDisplay=true
   ```
 - expose ovos-bus to ovos-skills (see below)
-
+- (optional) expose ovos-backend to ovos-skills (see below)
+  - needs to be set in mycroft.conf
+  - needed for some skills
+  - needed for pairing
+  - needed for metrics (opt in)
+  
 ### ovos-speech
 - create `ovos-speech` qubes from `template-ovos-base`
 - (optional) select `sys-ovos-firewall` as NetVM
@@ -209,6 +292,11 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   NoDisplay=true
   ```
 - expose ovos-bus to ovos-speech (see below)
+- (optional) expose ovos-backend to ovos-speech (see below)
+  - needs to be set in mycroft.conf
+  - integrates with selene stt plugin
+  - needed for metrics (opt in)
+  - needed for wake word upload (opt in)
 - [attach microphone](https://www.qubes-os.org/doc/how-to-use-devices/#attaching-devices)
 
 ### ovos-gui
@@ -233,6 +321,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   NoDisplay=true
   ```
 - expose ovos-bus to ovos-gui (see below)
+- (optional) expose ovos-backend to ovos-gui (see below)
 
 ### ovos-gui-client
 - install [community](https://www.qubes-os.org/doc/templates/#community) ubuntu template in dom0
@@ -249,6 +338,9 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   ```
 - expose ovos-bus to ovos-gui-client (see below)
 - expose ovos-gui to ovos-gui-client (see below)
+- launch `mycroft-gui-app` from this qube when wanted
+  - (optional) launch on qube on boot
+  - (optional) launch mycroft gui on VM startup
 
 ## Connecting the Qubes
 
@@ -262,6 +354,16 @@ expose port 8181 from `ovos-bus` to all `ovos-XXX` qubes
 - `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
 - add a new line with `ovos-XXX @default allow, target=ovos-bus` for every ovos qube
 - a reboot will needed for change to take effect
+
+### Exposing port 6712 from ovos-backend
+
+expose port 6712 from `ovos-backend` to all `ovos-XXX` qubes
+
+- open a terminal in `dom0`
+- `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
+- add a new line with `ovos-XXX @default allow, target=ovos-backend` for every ovos qube
+- a reboot will needed for change to take effect
+
 
 ### Exposing port 18181 from ovos-gui
 
@@ -309,6 +411,44 @@ StandardOutput=inherit
 cp -r /rw/config/bus.socket /rw/config/bus@.service /lib/systemd/system/
 systemctl daemon-reload
 systemctl start bus.socket 
+```
+
+### Create ovos-backend system services
+
+open a terminal in `ovos-XXX` and create the system services to connect to ovos-backend on launch
+
+- create bus.socket `sudo nano /rw/config/backend.socket`
+```
+[Unit]
+Description=ovos-backend-service
+
+[Socket]
+ListenStream=127.0.0.1:6712
+Accept=true
+
+[Install]
+WantedBy=sockets.target
+```
+- create backend.service `sudo nano backend@.service`
+```
+[Unit]
+Description=ovos-backend
+
+[Service]
+ExecStart=qrexec-client-vm '' qubes.ConnectTCP+6712
+StandardInput=socket
+StandardOutput=inherit
+```
+- edit rc.local to launch the service on qube launch `sudo /rw/config/rc.local `
+```
+#!/bin/sh
+
+# This script will be executed at every VM startup, you can place your own
+# custom commands here. This includes overriding some configuration in /etc,
+# starting services etc.
+cp -r /rw/config/backend.socket /rw/config/backend@.service /lib/systemd/system/
+systemctl daemon-reload
+systemctl start backend.socket 
 ```
 
 
