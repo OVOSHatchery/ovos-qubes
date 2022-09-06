@@ -1,6 +1,8 @@
 # ovos-qubes
 setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
+![Logo](ovos-qubes.png)
+
 * [Architecture](#architecture)
 * [Creating OVOS Qubes](#creating-ovos-qubes)
   + [template-ovos-base](#template-ovos-base)
