@@ -50,7 +50,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   - sys-ovos-firewall needed for internet skills
 - ovos-gui-client
   - StandaloneVM
-  - based on ubuntu template
+  - based on [ubuntu template](https://qubes.3isec.org/Templates_4.1)
   - mycroft-gui installed as user from source
   - sys-ovos-firewall needed for stream playback / web browsing / remote pictures
 
@@ -214,12 +214,11 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   ```
 - expose ovos-bus to ovos-speech (see below)
 - shutdown the qube
-- attach microphone
-  - manually after qube starts
-  - permanently 
+- [attach microphone](https://www.qubes-os.org/doc/how-to-use-devices/#attaching-devices)
 
 ## Connecting the Qubes
 
+We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube) for ovos-bus and ovos-gui
 
 ### Exposing port 8181 from ovos-bus
 
@@ -247,7 +246,7 @@ Accept=true
 [Install]
 WantedBy=sockets.target
 ```
-- create bus@.service `sudo nano bus@.service`
+- create bus.service `sudo nano bus@.service`
 ```
 [Unit]
 Description=ovos-bus
