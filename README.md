@@ -235,6 +235,10 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 - expose ovos-bus to ovos-gui (see below)
 
 ### ovos-gui-client
+- install [community](https://www.qubes-os.org/doc/templates/#community) ubuntu template in dom0
+  - download [here](https://qubes.3isec.org/Templates_4.1) to some qube, eg `dl_qube`
+  - copy downloaded file to dom0 `qvm-run --pass-io dl_qube 'cat /home/user/Downloads/focal.rpm' > /home/user/focal.rpm`
+  - install `sudo dnf install focal.rpm`
 - create `ovos-gui-client` qubes from `focal` as a StandaloneVM
 - select `sys-ovos-firewall` as NetVM
 - install mycroft-gui
