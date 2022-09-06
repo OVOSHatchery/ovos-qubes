@@ -99,9 +99,22 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
       "extension": "smartspeaker",
       "idle_display_skill": "skill-ovos-homescreen.openvoiceos"
     },
-    "stt": {"module": "ovos-stt-plugin-server"},
+    "stt": {"module": "ovos-stt-plugin-selene"},
     "tts": {"module": "ovos-tts-plugin-mimic3"},
     "padatious": {"regex_only": true},
+    "server": {
+      "disabled": false,
+      "url": "http://0.0.0.0:6712",
+      "version": "v1",
+      "update": true,
+      "metrics": true
+    },
+    "listener": {
+      "wake_word_upload": {
+        "url": "http://0.0.0.0:6712/precise/upload"
+      }
+    },
+    "opt_in": true,
     "debug": true,
     "log_level": "DEBUG"
   }
@@ -115,6 +128,13 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 - install ovos-local-backend (no sudo!)
   ```bash
   pip install git+https://github.com/OpenVoiceOS/OVOS-local-backend
+  ```
+- install extra STT plugins
+  - system dependencies (if any) need to be installed in `template-ovos-base`
+  - install recommended plugins
+  ```bash
+  pip install ovos-stt-plugin-server 
+  pip install ovos-stt-plugin-vosk
   ```
 - configure backend `nano ~/.config/json_database/ovos_backend.json`
   ```
@@ -344,7 +364,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ## Connecting the Qubes
 
-We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube) for ovos-bus and ovos-gui
+We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube) for ovos-bus, ovos-gui and ovos-backend
 
 ### Exposing port 8181 from ovos-bus
 
@@ -417,7 +437,7 @@ systemctl start bus.socket
 
 open a terminal in `ovos-XXX` and create the system services to connect to ovos-backend on launch
 
-- create bus.socket `sudo nano /rw/config/backend.socket`
+- create backend.socket `sudo nano /rw/config/backend.socket`
 ```
 [Unit]
 Description=ovos-backend-service
