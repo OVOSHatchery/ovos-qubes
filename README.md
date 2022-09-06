@@ -98,6 +98,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 ### ovos-bus
 
 - create `ovos-bus` qubes from `template-ovos-base`
+- set none as NetVM, this service does not need to reach to the internet
 - (optional) make this qube launch on boot
 - install ovos-bus (no sudo!)
   ```bash
@@ -120,6 +121,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ### ovos-gui
 - create `ovos-gui` qubes from `template-ovos-base`
+- set none as NetVM, this service does not need to reach to the internet
 - (optional) make this qube launch on boot
 - install ovos-gui (no sudo!)
   ```bash
@@ -143,6 +145,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ### ovos-audio
 - create `ovos-audio` qubes from `template-ovos-base`
+- select `sys-ovos-firewall` as NetVM
 - (optional) make this qube launch on boot
 - install ovos-audio (no sudo!)
   ```bash
@@ -168,6 +171,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ### ovos-skills
 - create `ovos-skills` qubes from `template-ovos-base`
+- select `sys-ovos-firewall` as NetVM
 - (optional) make this qube launch on boot
 - install ovos-skills (no sudo!)
   ```bash
@@ -194,6 +198,8 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ### ovos-speech
 - create `ovos-speech` qubes from `template-ovos-base`
+- (optional) select `sys-ovos-firewall` as NetVM
+  - not needed if you setup an offline STT plugin 
 - (optional) make this qube launch on boot
 - install ovos-speech (no sudo!)
   ```bash
