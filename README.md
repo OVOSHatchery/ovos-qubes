@@ -144,6 +144,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
       "ovos-stt-plugin-server": {"url": "https://stt.openvoiceos.com/stt"}
     },
     "backend_port": 6712,
+    "skip_auth": true,
     "geolocate": true,
     "override_location": false,
     "api_version": "v1",
@@ -163,6 +164,9 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
     }
   }  
   ```
+  
+  ⚠️ `"skip_auth"` needs to be set, `identity2.json` is not shared across ovos qubes ⚠️
+  
 - create auto_start.sh `nano auto-start.sh`
   ```bash
   /home/user/.local/bin/ovos-local-backend >> /home/user/backend.log 2>&1 &
@@ -192,6 +196,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
     }
   }
   ```
+- (optional) setup firewall rules, only allow outgoing connections to the domains of provided api services  
   
 ### ovos-bus
 
