@@ -326,6 +326,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 - (optional) expose ovos-backend to ovos-speech (see below)
   - needs to be set in mycroft.conf
   - integrates with selene stt plugin
+    - if using selene stt plugin you can set NetVM to none
   - needed for metrics (opt in)
   - needed for wake word upload (opt in)
   - you need to copy identity2.json from ovos-skills to keep the device uuid
