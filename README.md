@@ -200,7 +200,8 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   }
   ```
 - (optional) setup firewall rules, only allow outgoing connections to the domains of provided services  
-  
+  ![backend firewall](ovos-backend-fw.png)
+
 ### ovos-bus
 
 - create `ovos-bus` qubes from `template-ovos-base`
