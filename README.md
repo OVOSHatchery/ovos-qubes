@@ -379,6 +379,8 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube) for ovos-bus, ovos-gui and ovos-backend
 
+![exposed ports](ovos-policy.png)
+
 ### Exposing port 8181 from ovos-bus
 
 expose port 8181 from `ovos-bus` to all `ovos-XXX` qubes
