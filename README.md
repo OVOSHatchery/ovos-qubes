@@ -23,6 +23,8 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ## Architecture
 
+![qubes manager](ovos-qubes-manager.png)
+
 - sys-ovos-firewall 
   - DispVM
   - set firewall rules
