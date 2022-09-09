@@ -11,6 +11,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   + [ovos-audio](#ovos-audio)
   + [ovos-skills](#ovos-skills)
   + [ovos-speech](#ovos-speech)
+  + [ovos-phal](#ovos-phal)
   + [ovos-gui](#ovos-gui)
   + [ovos-gui-client](#ovos-gui-client)
 * [Connecting the Qubes](#connecting-the-qubes)
@@ -333,6 +334,34 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 - (optional) setup firewall rules, only allow outgoing connections to the domains of remote STT
 - [attach microphone](https://www.qubes-os.org/doc/how-to-use-devices/#attaching-devices)
 
+### ovos-phal
+- create `ovos-phal` qubes from `template-ovos-base`
+- select `sys-ovos-firewall` as NetVM
+  - depending on plugins installed this may be set to None
+- (optional) make this qube launch on boot
+- install ovos-phal (no sudo!)
+  ```bash
+  pip install ovos-phal
+  ```
+- install phal plugins
+  - system dependencies (if any) need to be installed in `template-ovos-base`
+  - install recommended plugins (TODO add list)
+- create auto_start.sh `nano auto-start.sh`
+  ```bash
+  /home/user/.local/bin/ovos_PHAL >> /home/user/phal.log 2>&1 &
+  ```
+- create .desktop file to autostart ovos-phal when the VM boots `nano /home/user/.config/autostart/PHAL.desktop`
+  ```
+  [Desktop Entry]
+  Name=OVOS PHAL Service
+  Exec=bash /home/user/auto-start.sh
+  Type=Application
+  StartupNotify=true
+  NoDisplay=true
+  ```
+- expose ovos-bus to ovos-phal (see below)
+  
+  
 ### ovos-gui
 - create `ovos-gui` qubes from `template-ovos-base`
 - set none as NetVM, this service does not need to reach to the internet
