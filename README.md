@@ -151,6 +151,10 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
       "module": "ovos-stt-plugin-server",
       "ovos-stt-plugin-server": {"url": "https://stt.openvoiceos.com/stt"}
     },
+    "selene": {
+      "enabled": false,
+      "proxy_pairing": true
+    },
     "backend_port": 6712,
     "skip_auth": true,
     "geolocate": true,
