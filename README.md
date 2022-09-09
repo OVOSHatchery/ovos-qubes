@@ -24,7 +24,16 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ## Architecture
 
-![qubes manager](ovos-qubes-manager.png)
+one ovos service correspondes to one qube
+
+
+    gray - no internet
+    green - only whitelisted outgoing connections
+    yellow - internet access
+
+
+![connections](connected_qubes.png)
+
 
 - sys-ovos-firewall 
   - DispVM
@@ -77,6 +86,9 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ## Creating OVOS Qubes
   
+  ![qubes manager](ovos-qubes-manager.png)
+
+
 ### template-ovos-base
 
 - clone a debian template VM as `template-ovos-base`
@@ -415,13 +427,6 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   - (optional) launch mycroft gui on VM startup
 
 ## Connecting the Qubes
-
-![connections](connected_qubes.png)
-
-- gray - no internet
-- green - only whitelisted outgoing connections
-- yellow - internet access
-
 
 We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube) for ovos-bus, ovos-gui and ovos-backend
 
