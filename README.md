@@ -41,6 +41,7 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   - ovos-local-backend installed as user
   - sys-ovos-firewall needed for API services / remote STT
   - 6712 port exposed to other ovos qubes
+  - can be configured as a [selene proxy](https://github.com/OpenVoiceOS/OVOS-local-backend#selene-proxy) if desired
 - ovos-bus
   - AppVM
   - ovos-bus installed as user
@@ -64,6 +65,10 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
   - AppVM
   - ovos-skills installed as user
   - sys-ovos-firewall needed for internet skills
+- ovos-phal
+  - AppVM
+  - ovos-PHAL installed as user
+  - dedicated plugins for qubes need to be written ⚠️
 - ovos-gui-client
   - StandaloneVM
   - based on [ubuntu template](https://qubes.3isec.org/Templates_4.1)
