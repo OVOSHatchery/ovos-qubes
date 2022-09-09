@@ -416,6 +416,13 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ## Connecting the Qubes
 
+![connections](connected_qubes.png)
+
+- gray - no internet
+- green - only whitelisted outgoing connections
+- yellow - internet access
+
+
 We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube) for ovos-bus, ovos-gui and ovos-backend
 
 ![exposed ports](ovos-policy.png)
