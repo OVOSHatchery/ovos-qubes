@@ -1,93 +1,97 @@
 # ovos-qubes
+
 setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 
 ![Logo](ovos-qubes.png)
 
 * [Architecture](#architecture)
 * [Creating OVOS Qubes](#creating-ovos-qubes)
-  + [template-ovos-base](#template-ovos-base)
-  + [ovos-backend](#ovos-backend)
-  + [ovos-bus](#ovos-bus)
-  + [ovos-audio](#ovos-audio)
-  + [ovos-skills](#ovos-skills)
-  + [ovos-speech](#ovos-speech)
-  + [ovos-phal](#ovos-phal)
-  + [ovos-gui](#ovos-gui)
-  + [ovos-gui-client](#ovos-gui-client)
+    + [template-ovos-base](#template-ovos-base)
+    + [ovos-backend](#ovos-backend)
+    + [ovos-bus](#ovos-bus)
+    + [ovos-audio](#ovos-audio)
+    + [ovos-skills](#ovos-skills)
+    + [ovos-speech](#ovos-speech)
+    + [ovos-phal](#ovos-phal)
+    + [ovos-gui](#ovos-gui)
+    + [ovos-gui-client](#ovos-gui-client)
 * [Connecting the Qubes](#connecting-the-qubes)
-  + [Exposing port 8181 from ovos-bus](#exposing-port-8181-from-ovos-bus)
-  + [Exposing port 6712 from ovos-backend](#exposing-port-6712-from-ovos-backend)
-  + [Exposing port 18181 from ovos-gui](#exposing-port-18181-from-ovos-gui)
-  + [Create ovos-bus system services](#create-ovos-bus-system-services)
-  + [Create ovos-backend system services](#create-ovos-backend-system-services)
-  + [Create ovos-gui system service](#create-ovos-gui-system-service)
+* [Hardening](#hardening)
+    + [Firewall ovos-backend](#firewall-ovos-backend)
+* [How to](#how-to)
+    + [Expose ovos-bus to other qubes](#expose-ovos-bus-to-other-qubes)
+    + [Expose ovos-backend to other qubes](#expose-ovos-backend-to-other-qubes)
+    + [Expose ovos-gui to other qubes](#expose-ovos-gui-to-other-qubes)
 
 ## Architecture
 
-one ovos service correspondes to one qube
+The aim here is to bring maximum isolation between services and reduce the chance that a misbehaved component can mess
+with the system
 
+Considerations:
+
+- one ovos service corresponds to one qube
+- whenever possible a service is disconnected from the internet
+- whenever possible a service is firewalled to only allow specific outgoing connections
+
+![connections](connected_qubes.png)
 
     gray - no internet
     green - only whitelisted outgoing connections
     yellow - internet access
 
-
-![connections](connected_qubes.png)
-
-
-- sys-ovos-firewall 
-  - DispVM
-  - set firewall rules
-  - can be connected [sys-vpn](https://github.com/Qubes-Community/Contents/blob/master/docs/configuration/vpn.md)
-  - can use [mirage firewall unikernel](https://github.com/mirage/qubes-mirage-firewall)
-  - all networked ovos qubes connect here
+- sys-ovos-firewall
+    - DispVM
+    - set firewall rules
+    - can be connected [sys-vpn](https://github.com/Qubes-Community/Contents/blob/master/docs/configuration/vpn.md)
+    - can use [mirage firewall unikernel](https://github.com/mirage/qubes-mirage-firewall)
+    - all networked ovos qubes connect here
 - template-ovos-base
-  - templateVM
-  - /etc/mycroft/mycroft.conf lives here
-  - system packages installed/updated here
+    - templateVM
+    - /etc/mycroft/mycroft.conf lives here
+    - system packages installed/updated here
 - ovos-backend
-  - AppVM
-  - ovos-local-backend installed as user
-  - sys-ovos-firewall needed for API services / remote STT
-  - 6712 port exposed to other ovos qubes
-  - can be configured as a [selene proxy](https://github.com/OpenVoiceOS/OVOS-local-backend#selene-proxy) if desired
+    - AppVM
+    - ovos-local-backend installed as user
+    - sys-ovos-firewall needed for API services / remote STT
+    - 6712 port exposed to other ovos qubes
+    - can be configured as a [selene proxy](https://github.com/OpenVoiceOS/OVOS-local-backend#selene-proxy) if desired
 - ovos-bus
-  - AppVM
-  - ovos-bus installed as user
-  - sys-ovos-firewall not needed
-  - 8181 port exposed to other ovos qubes
+    - AppVM
+    - ovos-bus installed as user
+    - sys-ovos-firewall not needed
+    - 8181 port exposed to other ovos qubes
 - ovos-gui
-  - AppVM
-  - ovos-gui installed as user
-  - sys-ovos-firewall not needed
-  - 18181 port exposed to ovos-gui-client qubes
+    - AppVM
+    - ovos-gui installed as user
+    - sys-ovos-firewall not needed
+    - 18181 port exposed to ovos-gui-client qubes
 - ovos-audio
-  - AppVM
-  - ovos-audio installed as user
-  - sys-ovos-firewall needed for stream playback / remote TTS
+    - AppVM
+    - ovos-audio installed as user
+    - sys-ovos-firewall needed for stream playback / remote TTS
 - ovos-speech
-  - AppVM
-  - ovos-speech installed as user
-  - sys-ovos-firewall needed for remote STT
-  - mic needs to be explicitly attached
+    - AppVM
+    - ovos-speech installed as user
+    - sys-ovos-firewall needed for remote STT
+    - mic needs to be explicitly attached
 - ovos-skills
-  - AppVM
-  - ovos-skills installed as user
-  - sys-ovos-firewall needed for internet skills
+    - AppVM
+    - ovos-skills installed as user
+    - sys-ovos-firewall needed for internet skills
 - ovos-phal
-  - AppVM
-  - ovos-PHAL installed as user
-  - dedicated plugins for qubes need to be written ⚠️
+    - AppVM
+    - ovos-PHAL installed as user
+    - dedicated plugins for qubes need to be written ⚠️
 - ovos-gui-client
-  - StandaloneVM
-  - based on [ubuntu template](https://qubes.3isec.org/Templates_4.1)
-  - mycroft-gui installed as user from source
-  - sys-ovos-firewall needed for stream playback / web browsing / remote pictures
+    - StandaloneVM
+    - based on [ubuntu template](https://qubes.3isec.org/Templates_4.1)
+    - mycroft-gui installed as user from source
+    - sys-ovos-firewall needed for stream playback / web browsing / remote pictures
 
 ## Creating OVOS Qubes
-  
-  ![qubes manager](ovos-qubes-manager.png)
 
+![qubes manager](ovos-qubes-manager.png)
 
 ### template-ovos-base
 
@@ -139,7 +143,7 @@ one ovos service correspondes to one qube
     "log_level": "DEBUG"
   }
   ```
-  
+
 ### ovos-backend
 
 - create `ovos-backend` qubes from `template-ovos-base`
@@ -150,8 +154,8 @@ one ovos service correspondes to one qube
   pip install git+https://github.com/OpenVoiceOS/OVOS-local-backend
   ```
 - install extra STT plugins
-  - system dependencies (if any) need to be installed in `template-ovos-base`
-  - install recommended plugins
+    - system dependencies (if any) need to be installed in `template-ovos-base`
+    - install recommended plugins
   ```bash
   pip install ovos-stt-plugin-server 
   pip install ovos-stt-plugin-vosk
@@ -188,15 +192,17 @@ one ovos service correspondes to one qube
     }
   }  
   ```
-  
-  ⚠️ only ovos-skills will have a `identity2.json`, `"skip_auth"` needs to be set, pairing is not shared across ovos qubes ⚠️
-  
-  
+
+  ⚠️ only ovos-skills will have a `identity2.json`, `"skip_auth"` needs to be set, pairing is not shared across ovos
+  qubes ⚠️
+
+
 - create auto_start.sh `nano auto-start.sh`
   ```bash
   /home/user/.local/bin/ovos-local-backend >> /home/user/backend.log 2>&1 &
   ```
-- create .desktop file to autostart ovos-backend when the VM boots `nano /home/user/.config/autostart/ovos-backend.desktop`
+- create .desktop file to autostart ovos-backend when the VM
+  boots `nano /home/user/.config/autostart/ovos-backend.desktop`
   ```
   [Desktop Entry]
   Name=OVOS Local Backend
@@ -221,8 +227,7 @@ one ovos service correspondes to one qube
     }
   }
   ```
-- (optional) setup firewall rules, only allow outgoing connections to the domains of provided services  
-  ![backend firewall](ovos-backend-fw.png)
+- (optional) [setup firewall rules](#firewall-ovos-backend), only allow outgoing connections to the domains of provided services  
 
 ### ovos-bus
 
@@ -237,7 +242,8 @@ one ovos service correspondes to one qube
   ```bash
   /home/user/.local/bin/mycroft-messagebus >> /home/user/bus.log 2>&1 &
   ```
-- create .desktop file to autostart ovos-bus when the VM boots `nano /home/user/.config/autostart/mycroft-messagebus.desktop`
+- create .desktop file to autostart ovos-bus when the VM
+  boots `nano /home/user/.config/autostart/mycroft-messagebus.desktop`
   ```
   [Desktop Entry]
   Name=OVOS Messagebus
@@ -249,6 +255,7 @@ one ovos service correspondes to one qube
 - (optional) expose ovos-backend to ovos-bus (see below)
 
 ### ovos-audio
+
 - create `ovos-audio` qubes from `template-ovos-base`
 - select `sys-ovos-firewall` as NetVM
 - (optional) make this qube launch on boot
@@ -257,8 +264,8 @@ one ovos service correspondes to one qube
   pip install ovos-core[audio,tts,audio_backend]
   ```
 - install extra TTS plugins
-  - system dependencies (if any) need to be installed in `template-ovos-base`
-  - install recommended plugins
+    - system dependencies (if any) need to be installed in `template-ovos-base`
+    - install recommended plugins
   ```bash
   pip install ovos-tts-plugin-marytts
   pip install ovos-tts-plugin-mimic3
@@ -267,7 +274,8 @@ one ovos service correspondes to one qube
   ```bash
   /home/user/.local/bin/mycroft-audio >> /home/user/audio.log 2>&1 &
   ```
-- create .desktop file to autostart ovos-audio when the VM boots `nano /home/user/.config/autostart/mycroft-audio.desktop`
+- create .desktop file to autostart ovos-audio when the VM
+  boots `nano /home/user/.config/autostart/mycroft-audio.desktop`
   ```
   [Desktop Entry]
   Name=OVOS Audio Service
@@ -278,12 +286,13 @@ one ovos service correspondes to one qube
   ```
 - expose ovos-bus to ovos-audio (see below)
 - (optional) expose ovos-backend to ovos-audio (see below)
-  - needs to be set in mycroft.conf
-  - needed for metrics (opt in)
-  - you need to copy identity2.json from ovos-skills to keep the device uuid
+    - needs to be set in mycroft.conf
+    - needed for metrics (opt in)
+    - you need to copy identity2.json from ovos-skills to keep the device uuid
 - (optional) setup firewall rules, only allow outgoing connections to the domains of remote TTS
-  
+
 ### ovos-skills
+
 - create `ovos-skills` qubes from `template-ovos-base`
 - select `sys-ovos-firewall` as NetVM
 - (optional) make this qube launch on boot
@@ -292,13 +301,14 @@ one ovos service correspondes to one qube
   pip install ovos-core[skills]
   ```
 - install skills
-  - system dependencies (if any) need to be installed in `template-ovos-base`
-  - install recommended skills (TODO add list)
+    - system dependencies (if any) need to be installed in `template-ovos-base`
+    - install recommended skills (TODO add list)
 - create auto_start.sh `nano auto-start.sh`
   ```bash
   /home/user/.local/bin/mycroft-skills >> /home/user/skills.log 2>&1 &
   ```
-- create .desktop file to autostart ovos-skills when the VM boots `nano /home/user/.config/autostart/mycroft-skills.desktop`
+- create .desktop file to autostart ovos-skills when the VM
+  boots `nano /home/user/.config/autostart/mycroft-skills.desktop`
   ```
   [Desktop Entry]
   Name=OVOS Skills Service
@@ -309,23 +319,24 @@ one ovos service correspondes to one qube
   ```
 - expose ovos-bus to ovos-skills (see below)
 - (optional) expose ovos-backend to ovos-skills (see below)
-  - needs to be set in mycroft.conf
-  - needed for some skills
-  - needed for pairing
-  - needed for metrics (opt in)
-  
+    - needs to be set in mycroft.conf
+    - needed for some skills
+    - needed for pairing
+    - needed for metrics (opt in)
+
 ### ovos-speech
+
 - create `ovos-speech` qubes from `template-ovos-base`
 - (optional) select `sys-ovos-firewall` as NetVM
-  - not needed if you setup an offline STT plugin 
+    - not needed if you setup an offline STT plugin
 - (optional) make this qube launch on boot
 - install ovos-speech (no sudo!)
   ```bash
   pip install ovos-core[stt]
   ```
 - install extra STT plugins
-  - system dependencies (if any) need to be installed in `template-ovos-base`
-  - install recommended plugins
+    - system dependencies (if any) need to be installed in `template-ovos-base`
+    - install recommended plugins
   ```bash
   pip install ovos-stt-plugin-selene 
   pip install ovos-stt-plugin-vosk
@@ -335,7 +346,8 @@ one ovos service correspondes to one qube
   ```bash
   /home/user/.local/bin/mycroft-speech-client >> /home/user/stt.log 2>&1 &
   ```
-- create .desktop file to autostart ovos-speech when the VM boots `nano /home/user/.config/autostart/mycroft-stt.desktop`
+- create .desktop file to autostart ovos-speech when the VM
+  boots `nano /home/user/.config/autostart/mycroft-stt.desktop`
   ```
   [Desktop Entry]
   Name=OVOS Speech Client
@@ -346,27 +358,28 @@ one ovos service correspondes to one qube
   ```
 - expose ovos-bus to ovos-speech (see below)
 - (optional) expose ovos-backend to ovos-speech (see below)
-  - needs to be set in mycroft.conf
-  - integrates with selene stt plugin
-    - if using selene stt plugin you can set NetVM to none
-  - needed for metrics (opt in)
-  - needed for wake word upload (opt in)
-  - you need to copy identity2.json from ovos-skills to keep the device uuid
+    - needs to be set in mycroft.conf
+    - integrates with selene stt plugin
+        - if using selene stt plugin you can set NetVM to none
+    - needed for metrics (opt in)
+    - needed for wake word upload (opt in)
+    - you need to copy identity2.json from ovos-skills to keep the device uuid
 - (optional) setup firewall rules, only allow outgoing connections to the domains of remote STT
 - [attach microphone](https://www.qubes-os.org/doc/how-to-use-devices/#attaching-devices)
 
 ### ovos-phal
+
 - create `ovos-phal` qubes from `template-ovos-base`
 - select `sys-ovos-firewall` as NetVM
-  - depending on plugins installed this may be set to None
+    - depending on plugins installed this may be set to None
 - (optional) make this qube launch on boot
 - install ovos-phal (no sudo!)
   ```bash
   pip install ovos-phal
   ```
 - install phal plugins
-  - system dependencies (if any) need to be installed in `template-ovos-base`
-  - install recommended plugins (TODO add list)
+    - system dependencies (if any) need to be installed in `template-ovos-base`
+    - install recommended plugins (TODO add list)
 - create auto_start.sh `nano auto-start.sh`
   ```bash
   /home/user/.local/bin/ovos_PHAL >> /home/user/phal.log 2>&1 &
@@ -381,9 +394,9 @@ one ovos service correspondes to one qube
   NoDisplay=true
   ```
 - expose ovos-bus to ovos-phal (see below)
-  
-  
+
 ### ovos-gui
+
 - create `ovos-gui` qubes from `template-ovos-base`
 - set none as NetVM, this service does not need to reach to the internet
 - (optional) make this qube launch on boot
@@ -395,7 +408,8 @@ one ovos service correspondes to one qube
   ```bash
   /home/user/.local/bin/mycroft-gui-service >> /home/user/gui.log 2>&1 &
   ```
-- create .desktop file to autostart ovos-gui when the VM boots `nano /home/user/.config/autostart/mycroft-gui-messagebus.desktop`
+- create .desktop file to autostart ovos-gui when the VM
+  boots `nano /home/user/.config/autostart/mycroft-gui-messagebus.desktop`
   ```
   [Desktop Entry]
   Name=OVOS GUI Messagebus
@@ -405,13 +419,14 @@ one ovos service correspondes to one qube
   NoDisplay=true
   ```
 - expose ovos-bus to ovos-gui (see below)
-- (optional) expose ovos-backend to ovos-gui (see below)
 
 ### ovos-gui-client
+
 - install [community](https://www.qubes-os.org/doc/templates/#community) ubuntu template in dom0
-  - download [here](https://qubes.3isec.org/Templates_4.1) to some qube, eg `dl_qube`
-  - copy downloaded file to dom0 `qvm-run --pass-io dl_qube 'cat /home/user/Downloads/focal.rpm' > /home/user/focal.rpm`
-  - install `sudo dnf install focal.rpm`
+    - download [here](https://qubes.3isec.org/Templates_4.1) to some qube, eg `dl_qube`
+    - copy downloaded file to
+      dom0 `qvm-run --pass-io dl_qube 'cat /home/user/Downloads/focal.rpm' > /home/user/focal.rpm`
+    - install `sudo dnf install focal.rpm`
 - create `ovos-gui-client` qubes from `focal` as a StandaloneVM
 - select `sys-ovos-firewall` as NetVM
 - install mycroft-gui
@@ -423,49 +438,65 @@ one ovos service correspondes to one qube
 - expose ovos-bus to ovos-gui-client (see below)
 - expose ovos-gui to ovos-gui-client (see below)
 - launch `mycroft-gui-app` from this qube when wanted
-  - (optional) launch on qube on boot
-  - (optional) launch mycroft gui on VM startup
+    - (optional) launch on qube on boot
+    - (optional) launch mycroft gui on VM startup
 
 ## Connecting the Qubes
 
-We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube) for ovos-bus, ovos-gui and ovos-backend
+We need to [open a TCP port to other network-isolated qubes](https://www.qubes-os.org/doc/firewall/#opening-a-single-tcp-port-to-other-network-isolated-qube)
+for ovos-bus, ovos-gui and ovos-backend
 
 ![exposed ports](ovos-policy.png)
 
-### Exposing port 8181 from ovos-bus
+- [expose port 8181]((#expose-ovos-bus-to-other-qubes))
+    - from `ovos-bus` to `ovos-audio`
+    - from `ovos-bus` to `ovos-speech`
+    - from `ovos-bus` to `ovos-skills`
+    - from `ovos-bus` to `ovos-gui`
+    - from `ovos-bus` to `ovos-gui-client`
+    - from `ovos-bus` to `ovos-phal`
+- [expose port 6712](#expose-ovos-backend-to-other-qubes)
+    - from `ovos-backend` to `ovos-skills`
+    - (optional) from `ovos-backend` to `ovos-speech`
+        - required if using selene plugin
+- [expose port 18181](#expose-ovos-gui-to-other-qubes)
+    - from `ovos-gui` to `ovos-gui-client`
 
-expose port 8181 from `ovos-bus` to all `ovos-XXX` qubes
+## Hardening
+
+### Firewall ovos-backend
+
+ovos-backend can be restricted to only allow certain outgoing connections, this is a very good idea since we know exactly which services this qube needs to connect and why
+
+![backend firewall](ovos-backend-fw.png)
+
+| service        | domain                      | used for                  | required by                   | disabled by                                                        |
+|----------------|-----------------------------|---------------------------|-------------------------------|--------------------------------------------------------------------|
+| IPify          | api.ipify.org               | ip geolocation            | `"geolocate": true`           | `"override_location": true`                                        |                               |
+| OpenWeatherMap | api.openweathermap.org      | weather api               | `"owm_key": "your_key"`       | `"proxy_weather": true`                                            |
+| OpenStreetMap  | nominatim.openstreetmap.org | geolocation api           | default                       | `"proxy_geolocation": true`                                        |
+| WolframAlpha   | api.wolframalpha.com        | wolfram alpha api         | `"wolfram_key": "your_key"`   | `"proxy_wolfram": true`                                            |
+| OpenVoiceOS    | openvoiceos.com             | free microservice proxies | default                       | `"xxx_key": "your_key"` or `"proxy_xxx": true` (wolfram + weather) |
+| Email Service  | ?                           | SMTP email server         | `"email": {"..."}`            | `"proxy_email": true`                                              |
+| STT Service    | ?                           | remote STT transcription  | some stt plugins              | default                                                            |
+| Selene         | api.mycroft.ai              | selene proxy integration  | `"selene": {"enabled": true}` | default                                                            |
+
+
+## How to
+
+### Expose ovos-bus to other qubes
+
+expose port 8181 from `ovos-bus` to `ovos-XXX` qube
 
 - open a terminal in `dom0`
 - `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
 - add a new line with `ovos-XXX @default allow, target=ovos-bus` for every ovos qube
 - a reboot will needed for change to take effect
 
-### Exposing port 6712 from ovos-backend
-
-expose port 6712 from `ovos-backend` to all `ovos-XXX` qubes
-
-- open a terminal in `dom0`
-- `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
-- add a new line with `ovos-XXX @default allow, target=ovos-backend` for every ovos qube
-- a reboot will needed for change to take effect
-
-
-### Exposing port 18181 from ovos-gui
-
-expose port 18181 from `ovos-gui` to `ovos-gui-client` qube
-
-- open a terminal in `dom0`
-- `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
-- add a new line with `ovos-gui-client @default allow, target=ovos-gui`
-- a reboot will needed for change to take effect
-
-
-### Create ovos-bus system services
-
-open a terminal in `ovos-XXX` and create the system services to connect to ovos-bus on launch
+open a terminal in `ovos-XXX` and create the system services to open a socket and connect to ovos-bus on launch
 
 - create bus.socket `sudo nano /rw/config/bus.socket`
+
 ```
 [Unit]
 Description=ovos-bus-service
@@ -477,7 +508,9 @@ Accept=true
 [Install]
 WantedBy=sockets.target
 ```
+
 - create bus.service `sudo nano bus@.service`
+
 ```
 [Unit]
 Description=ovos-bus
@@ -487,7 +520,9 @@ ExecStart=qrexec-client-vm '' qubes.ConnectTCP+8181
 StandardInput=socket
 StandardOutput=inherit
 ```
+
 - edit rc.local to launch the service on qube launch `sudo /rw/config/rc.local `
+
 ```
 #!/bin/sh
 
@@ -499,11 +534,19 @@ systemctl daemon-reload
 systemctl start bus.socket 
 ```
 
-### Create ovos-backend system services
+### Expose ovos-backend to other qubes
 
-open a terminal in `ovos-XXX` and create the system services to connect to ovos-backend on launch
+expose port 6712 from `ovos-backend` to `ovos-XXX` qube
+
+- open a terminal in `dom0`
+- `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
+- add a new line with `ovos-XXX @default allow, target=ovos-backend` for every ovos qube
+- a reboot will needed for change to take effect
+
+open a terminal in `ovos-XXX` and create the system services to open a socket and connect to ovos-backend on launch
 
 - create backend.socket `sudo nano /rw/config/backend.socket`
+
 ```
 [Unit]
 Description=ovos-backend-service
@@ -515,7 +558,9 @@ Accept=true
 [Install]
 WantedBy=sockets.target
 ```
+
 - create backend.service `sudo nano backend@.service`
+
 ```
 [Unit]
 Description=ovos-backend
@@ -525,7 +570,9 @@ ExecStart=qrexec-client-vm '' qubes.ConnectTCP+6712
 StandardInput=socket
 StandardOutput=inherit
 ```
+
 - edit rc.local to launch the service on qube launch `sudo /rw/config/rc.local `
+
 ```
 #!/bin/sh
 
@@ -537,12 +584,19 @@ systemctl daemon-reload
 systemctl start backend.socket 
 ```
 
+### Expose ovos-gui to other qubes
 
-### Create ovos-gui system service
+expose port 18181 from `ovos-gui` to `ovos-XXX` qube
 
-open a terminal in `ovos-gui-client` and create the system service to connect to ovos-gui on launch
+- open a terminal in `dom0`
+- `sudo nano /etc/qubes-rpc/policy/qubes.ConnectTCP`
+- add a new line with `ovos-XXX @default allow, target=ovos-gui`
+- a reboot will needed for change to take effect
+
+open a terminal in `ovos-gui-client` and create the system service to open a socket and connect to ovos-gui on launch
 
 - create gui.socket `sudo nano /rw/config/gui.socket`
+
 ```
 [Unit]
 Description=ovos-gui-service
@@ -554,7 +608,9 @@ Accept=true
 [Install]
 WantedBy=sockets.target
 ```
+
 - create gui.service `sudo nano gui@.service`
+
 ```
 [Unit]
 Description=ovos-gui
@@ -564,7 +620,9 @@ ExecStart=qrexec-client-vm '' qubes.ConnectTCP+18181
 StandardInput=socket
 StandardOutput=inherit
 ```
+
 - edit rc.local to launch the service on qube launch `sudo /rw/config/rc.local `
+
 ```
 #!/bin/sh
 
