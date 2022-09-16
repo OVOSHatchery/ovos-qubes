@@ -18,7 +18,9 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
 * [Connecting the Qubes](#connecting-the-qubes)
 * [Hardening](#hardening)
     + [Firewall ovos-backend](#firewall-ovos-backend)
+    + [Choose an offline STT](#choose-an-offline-stt)
 * [How to](#how-to)
+    + [Enable ovos-backend](#enable-ovos-backend)
     + [Expose ovos-bus to other qubes](#expose-ovos-bus-to-other-qubes)
     + [Expose ovos-backend to other qubes](#expose-ovos-backend-to-other-qubes)
     + [Expose ovos-gui to other qubes](#expose-ovos-gui-to-other-qubes)
@@ -125,22 +127,12 @@ Considerations:
       "extension": "smartspeaker",
       "idle_display_skill": "skill-ovos-homescreen.openvoiceos"
     },
-    "stt": {"module": "ovos-stt-plugin-selene"},
+    "stt": {"module": "ovos-stt-plugin-vosk"},
     "tts": {"module": "ovos-tts-plugin-mimic3"},
     "padatious": {"regex_only": true},
     "server": {
-      "disabled": false,
-      "url": "http://0.0.0.0:6712",
-      "version": "v1",
-      "update": true,
-      "metrics": true
+      "disabled": true
     },
-    "listener": {
-      "wake_word_upload": {
-        "url": "http://0.0.0.0:6712/precise/upload"
-      }
-    },
-    "opt_in": true,
     "debug": true,
     "log_level": "DEBUG"
   }
@@ -213,23 +205,9 @@ Considerations:
   StartupNotify=true
   NoDisplay=true
   ```
-- configure mycroft.conf in `template-ovos-base` or in every independent `ovos-XXX` qube
-  ```
-  {
-    "server": {
-      "url": "http://0.0.0.0:6712",
-      "version": "v1",
-      "update": true,
-      "metrics": true
-    },
-    "listener": {
-      "wake_word_upload": {
-        "url": "http://0.0.0.0:6712/precise/upload"
-      }
-    }
-  }
-  ```
-- (optional) [setup firewall rules](#firewall-ovos-backend), only allow outgoing connections to the domains of provided services  
+- [Enable ovos-backend](#enable-ovos-backend) in `template-ovos-base` or in every independent `ovos-XXX` qube
+- (optional) [setup firewall rules](#firewall-ovos-backend), only allow outgoing connections to the domains of provided
+  services
 
 ### ovos-bus
 
@@ -254,7 +232,7 @@ Considerations:
   StartupNotify=true
   NoDisplay=true
   ```
-- (optional) expose ovos-backend to ovos-bus (see below)
+- (optional) [disable ovos-backend](#enable-ovos-backend)
 
 ### ovos-audio
 
@@ -286,10 +264,8 @@ Considerations:
   StartupNotify=true
   NoDisplay=true
   ```
-- expose ovos-bus to ovos-audio (see below)
-- (optional) expose ovos-backend to ovos-audio (see below)
-    - needs to be set in mycroft.conf
-    - needed for metrics (opt in)
+- [expose ovos-bus to ovos-audio](#expose-ovos-bus-to-other-qubes)
+- (optional) [Enable ovos-backend](#enable-ovos-backend)
     - you need to copy identity2.json from ovos-skills to keep the device uuid
 - (optional) setup firewall rules, only allow outgoing connections to the domains of remote TTS
 
@@ -319,18 +295,14 @@ Considerations:
   StartupNotify=true
   NoDisplay=true
   ```
-- expose ovos-bus to ovos-skills (see below)
-- (optional) expose ovos-backend to ovos-skills (see below)
-    - needs to be set in mycroft.conf
-    - needed for some skills
-    - needed for pairing
-    - needed for metrics (opt in)
+- [expose ovos-bus to ovos-skills](#expose-ovos-bus-to-other-qubes)
+- (optional) [Enable ovos-backend](#enable-ovos-backend)
 
 ### ovos-speech
 
 - create `ovos-speech` qubes from `template-ovos-base`
 - (optional) select `sys-ovos-firewall` as NetVM
-    - not needed if you setup an offline STT plugin
+    - not needed if you [choose an offline STT](#choose-an-offline-stt)
 - (optional) make this qube launch on boot
 - install ovos-speech (no sudo!)
   ```bash
@@ -358,15 +330,11 @@ Considerations:
   StartupNotify=true
   NoDisplay=true
   ```
-- expose ovos-bus to ovos-speech (see below)
-- (optional) expose ovos-backend to ovos-speech (see below)
-    - needs to be set in mycroft.conf
+- [expose ovos-bus to ovos-speech](#expose-ovos-bus-to-other-qubes)
+- (optional) [Enable ovos-backend](#enable-ovos-backend)
     - integrates with selene stt plugin
         - if using selene stt plugin you can set NetVM to none
-    - needed for metrics (opt in)
-    - needed for wake word upload (opt in)
     - you need to copy identity2.json from ovos-skills to keep the device uuid
-- (optional) setup firewall rules, only allow outgoing connections to the domains of remote STT
 - [attach microphone](https://www.qubes-os.org/doc/how-to-use-devices/#attaching-devices)
 
 ### ovos-phal
@@ -395,7 +363,8 @@ Considerations:
   StartupNotify=true
   NoDisplay=true
   ```
-- expose ovos-bus to ovos-phal (see below)
+- [expose ovos-bus to ovos-phal]((#expose-ovos-bus-to-other-qubes))
+- (optional) [disable ovos-backend](#enable-ovos-backend)
 
 ### ovos-gui
 
@@ -420,7 +389,8 @@ Considerations:
   StartupNotify=true
   NoDisplay=true
   ```
-- expose ovos-bus to ovos-gui (see below)
+- [expose ovos-bus to ovos-gui]((#expose-ovos-bus-to-other-qubes))
+- (optional) [disable ovos-backend](#enable-ovos-backend)
 
 ### ovos-gui-client
 
@@ -438,8 +408,8 @@ Considerations:
   cd mycroft-gui
   ./dev_setup.sh
   ```
-- expose ovos-bus to ovos-gui-client (see below)
-- expose ovos-gui to ovos-gui-client (see below)
+- [expose ovos-bus to ovos-gui-client]((#expose-ovos-bus-to-other-qubes))
+- [expose ovos-gui to ovos-gui-client]((#expose-ovos-bus-to-other-qubes))
 - launch `mycroft-gui-app` from this qube when wanted
     - (optional) launch on qube on boot
     - (optional) launch mycroft gui on VM startup
@@ -469,7 +439,8 @@ for ovos-bus, ovos-gui and ovos-backend
 
 ### Firewall ovos-backend
 
-ovos-backend can be restricted to only allow certain outgoing connections, this is a very good idea since we know exactly which services this qube needs to connect and why
+ovos-backend can be restricted to only allow certain outgoing connections, this is a very good idea since we know
+exactly which services this qube needs to connect and why
 
 ![backend firewall](ovos-backend-fw.png)
 
@@ -484,8 +455,93 @@ ovos-backend can be restricted to only allow certain outgoing connections, this 
 | STT Service    | ?                           | remote STT transcription  | some stt plugins              | default                                                            |
 | Selene         | api.mycroft.ai              | selene proxy integration  | `"selene": {"enabled": true}` | default                                                            |
 
+### Choose an offline STT
+
+There are some offline STT options listed below, if any of those is acceptable to you then you should configure
+ovos-qubes to use it, this way your speech will never leave your computer
+
+Option 1 - directly in ovos-speech
+
+- configure `~/.config/mycroft/mycroft.conf` to use your offline-stt-plugin
+- ensure ovos-speech has no NetVM
+- (optional) disable ovos-backend
+    - ovos-backend only needed if you want metrics upload
+
+Option 2 - in ovos-backend
+
+- configure `~/.config/mycroft/mycroft.conf` to use your ovos-backend
+- configure `~/.config/mycroft/mycroft.conf` to use your selene-plugin
+- configure `~/.config/json_database/ovos_backend.json` to use your offline-stt-plugin
+- [expose ovos-backend to ovos-speech](#expose-ovos-backend-to-other-qubes)
+- ensure ovos-speech has no NetVM
+    - ovos-backend will still be available
 
 ## How to
+
+### Enable ovos-backend
+
+By default ovos-core does not use a backend, we need to explicitly enable ovos-backend in mycroft.conf
+
+to enable ovos-backend edit mycroft.conf in the desired qubes with the following
+
+```json
+  {
+  "server": {
+    "disabled": false,
+    "url": "http://0.0.0.0:6712",
+    "version": "v1",
+    "update": true,
+    "metrics": true
+  },
+  "listener": {
+    "wake_word_upload": {
+      "url": "http://0.0.0.0:6712/precise/upload"
+    }
+  },
+  "opt_in": true
+}
+```
+
+to disable backend edit mycroft.conf with the following
+
+```json
+  {
+  "server": {
+    "disabled": true
+  }
+}
+```
+
+Option 1 - globally, in template-ovos-base
+
+- edit `/etc/mycroft/mycroft.conf`
+- [expose ovos-backend to every ovos-XXX qubes](#expose-ovos-backend-to-other-qubes)
+
+Option 2 - selectively, per qube
+
+- edit `~/.config/mycroft/mycroft.conf` in ovos-XXX
+- enable backend in ovos-skills
+    - [expose ovos-backend to ovos-skills](#expose-ovos-backend-to-other-qubes)
+    - needed for pairing process
+    - needed for metrics
+    - needed for device configuration via backend (location, preferences, skill settings)
+    - needed for skills that use the microservices (email, geolocation, weather, wolfram alpha)
+- (optional) enable backend in ovos-audio
+    - [expose ovos-backend to ovos-audio](#expose-ovos-backend-to-other-qubes)
+    - needed for metrics
+    - needed for tts configuration via backend
+    - copy identity2.json from ovos-skills or enable `skip_auth` in backend config
+- (optional) enable backend in ovos-speech
+    - [expose ovos-backend to ovos-speech](#expose-ovos-backend-to-other-qubes)
+    - needed for metrics
+    - needed for wake word configuration via backend
+    - needed for ovos-stt-plugin-selene
+    - needed for wake word upload
+    - needed for utterance upload
+    - copy identity2.json from ovos-skills or enable `skip_auth` in backend config
+- disable backend in ovos-bus, it's not used
+- disable backend in ovos-gui, it's not used
+- disable backend in ovos-phal, it's not used
 
 ### Expose ovos-bus to other qubes
 
@@ -636,7 +692,6 @@ cp -r /rw/config/gui.socket /rw/config/gui@.service /lib/systemd/system/
 systemctl daemon-reload
 systemctl start gui.socket 
 ```
-
 
 # Troubleshooting
 
