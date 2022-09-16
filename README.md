@@ -22,6 +22,8 @@ setting up a hardened ovos-core under [QubesOS](https://www.qubes-os.org)
     + [Expose ovos-bus to other qubes](#expose-ovos-bus-to-other-qubes)
     + [Expose ovos-backend to other qubes](#expose-ovos-backend-to-other-qubes)
     + [Expose ovos-gui to other qubes](#expose-ovos-gui-to-other-qubes)
+* [Troubleshooting](#troubleshooting)
+    + [No audio in ubuntu template](#no-audio-in-ubuntu-template)
 
 ## Architecture
 
@@ -427,6 +429,7 @@ Considerations:
     - copy downloaded file to
       dom0 `qvm-run --pass-io dl_qube 'cat /home/user/Downloads/focal.rpm' > /home/user/focal.rpm`
     - install `sudo dnf install focal.rpm`
+    - ⚠️ [Fix no audio bug](#no-audio-in-ubuntu-template)
 - create `ovos-gui-client` qubes from `focal` as a StandaloneVM
 - select `sys-ovos-firewall` as NetVM
 - install mycroft-gui
@@ -632,4 +635,17 @@ StandardOutput=inherit
 cp -r /rw/config/gui.socket /rw/config/gui@.service /lib/systemd/system/
 systemctl daemon-reload
 systemctl start gui.socket 
+```
+
+
+# Troubleshooting
+
+## No audio in ubuntu template
+
+There seems to be a [bug](https://github.com/QubesOS/qubes-issues/issues/6306) in the ubuntu template recommended above
+
+To fix this open a terminal in your ubuntu template + standaloneVMs and run
+
+```bash
+sudo ln -s /lib/pulse-13.99/modules/module-vchan-sink.so /lib/pulse-13.99.1/modules/module-vchan-sink.so
 ```
